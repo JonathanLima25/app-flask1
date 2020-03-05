@@ -1,7 +1,9 @@
 import db
+from converters import RegexConverter
 from flask import Flask, abort, url_for
 
 app = Flask(__name__)
+app.url_map.converters['regex'] = RegexConverter
 
 @app.route('/')
 def index():
@@ -28,7 +30,7 @@ def profile(username):
 
 app.add_url_rule('/user/<username>/', view_func=profile, endpoint='user')
 
-@app.route('/user/<username>/<quote_id>')
+@app.route('/user/<username>/<int:quote_id>')
 def quote(username, quote_id):
     user = db.users.get(username, {})
     quote = user.get("quotes").get(quote_id)
@@ -41,5 +43,12 @@ def quote(username, quote_id):
     else:
         return abort(404, "Quote not found")
         
+@app.route('/file/<path:filename>/')
+def filepath(filename):
+    return f"argumento recebido: {filename}"
+
+@app.route('/reg/<regex("a.*"):name>/')
+def reg(name):
+    return f"Argumentos iniciados com a letra a: {name}"
 
 app.run(use_reloader=True)
