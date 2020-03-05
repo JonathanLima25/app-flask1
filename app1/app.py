@@ -28,4 +28,18 @@ def profile(username):
 
 app.add_url_rule('/user/<username>/', view_func=profile, endpoint='user')
 
+@app.route('/user/<username>/<quote_id>')
+def quote(username, quote_id):
+    user = db.users.get(username, {})
+    quote = user.get("quotes").get(quote_id)
+    if user and quote:
+        return f"""
+            <h1>{user['name']}</h1>
+            <img src="{user['image']}"/><br>
+            <p><q>{quote}</q></p>
+        """
+    else:
+        return abort(404, "Quote not found")
+        
+
 app.run(use_reloader=True)
