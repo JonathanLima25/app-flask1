@@ -1,9 +1,11 @@
 import db
-from converters import RegexConverter
+from converters import RegexConverter, ListConverter
 from flask import Flask, abort, url_for
 
 app = Flask(__name__)
 app.url_map.converters['regex'] = RegexConverter
+app.url_map.converters['list'] = ListConverter
+
 
 @app.route('/')
 def index():
@@ -15,22 +17,23 @@ def index():
     html.append('</ul>')
     return '\n'.join(html)
 
-def profile(username):
-    user = db.users.get(username)
+@app.route('/user/<list:usernames>/', endpoint='user')
+def profile(usernames):
+    html = ""
+    for username in usernames:
+        user = db.users.get(username)
 
-    if user:
-        return f"""
-            <h1>{user['name']}</h1>
-            <img src="{user['image']}"/><br>
-            telefone: {user['tel']} <br>
-            <a href="/">Voltar</a>
-        """
-    else:
-        return abort(404, "User not found")
+        if user:
+            html += f"""
+                <h1>{user['name']}</h1>
+                <img src="{user['image']}"/><br>
+                telefone: {user['tel']} <br>
+                <a href="{url_for('index')}">Voltar</a>
+            """
+    return html or abort(404, "User not found")
 
-app.add_url_rule('/user/<username>/', view_func=profile, endpoint='user')
 
-@app.route('/user/<username>/<int:quote_id>')
+@app.route('/user/<string:username>/<int:quote_id>/')
 def quote(username, quote_id):
     user = db.users.get(username, {})
     quote = user.get("quotes").get(quote_id)
@@ -50,5 +53,9 @@ def filepath(filename):
 @app.route('/reg/<regex("a.*"):name>/')
 def reg(name):
     return f"Argumentos iniciados com a letra a: {name}"
+
+@app.route('/reg/<regex("b.*"):name>/')
+def reg_b(name):
+    return f"Argumentos iniciados com a letra b: {name}"
 
 app.run(use_reloader=True)
